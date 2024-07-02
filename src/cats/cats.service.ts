@@ -2,15 +2,24 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateCatDto } from './dto/update-cat.dto';
 import { Cat } from './entities/cat.entity';
 import { randomUUID } from 'crypto';
+import { filter } from 'rxjs';
 
 @Injectable()
 export class CatsService {
   private readonly cats: Cat[] = [];
 
   create(cat: Cat) {
-    cat.id = randomUUID();
-    this.cats.push(cat);
-    console.log(cat);
+    const allowedKeys = ['name', 'age', 'color']; //
+    const filteredCreate: any = Object.keys(cat)
+      .filter((key) => allowedKeys.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = cat[key];
+        return obj;
+      }, {});
+    if (filteredCreate) {
+      filteredCreate.id = randomUUID();
+      this.cats.push(filteredCreate);
+    }
   }
 
   findAll(): Cat[] {
@@ -28,7 +37,14 @@ export class CatsService {
   update(id: string, updateCatDto: UpdateCatDto): Cat | null {
     const foundCat = this.findOne(id);
     if (foundCat) {
-      const updatedCat = Object.assign(foundCat, updateCatDto);
+      const allowedKeys = ['name', 'age', 'color']; //
+      const filteredUpdate = Object.keys(updateCatDto)
+        .filter((key) => allowedKeys.includes(key))
+        .reduce((obj, key) => {
+          obj[key] = updateCatDto[key];
+          return obj;
+        }, {});
+      const updatedCat = Object.assign(foundCat, filteredUpdate);
       this.cats[id] = updatedCat;
       return updatedCat;
     }
@@ -38,7 +54,11 @@ export class CatsService {
   remove(id: string) {
     const foundCat = this.findOne(id);
     if (foundCat) {
-      this.cats.pop();
+      const index: any = this.cats.filter(function (item) {
+        return item.id === id;
+      });
+      console.log(index);
+      this.cats.splice(index, 0);
       return `This action removes a #${foundCat.name} cat`;
     }
     throw new NotFoundException();

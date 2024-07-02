@@ -3,8 +3,6 @@ import { CreateCatDto } from './create-cat.dto';
 
 export class UpdateCatDto extends PartialType(CreateCatDto) {
   name: string;
-
   age: number;
-
   color: string;
 }
